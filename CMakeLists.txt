@@ -21,11 +21,20 @@ include_directories(${EIGEN3_INCLUDE_DIRS})
 find_package(NanoFlann REQUIRED)
 include_directories(${NANOFLANN_INCLUDE_DIR})
 
+find_package(UnifiedCvo REQUIRED)
+
 #--- Build example
 include_directories(.)
 file(GLOB SOURCES "*.cpp")
 file(GLOB HEADERS "*.h")
 add_executable(FRICP ${SOURCES} ${HEADERS})
+
+add_executable(kitti_test kitti.cpp)
+target_link_libraries(kitti_test UnifiedCvo::kitti )
+
+add_executable(tartan_test tartan.cpp )
+target_link_libraries(tartan_test UnifiedCvo::tartan )
+
 
 if(APPLE OR UNIX)
     #--- Deploy data folder link
