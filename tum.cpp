@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -6,7 +7,7 @@
 #include "ICP.h"
 #include "io_pc.h"
 #include "FRICP.h"
-#include "dataset_handler/TartanAirHandler.hpp"
+#include "dataset_handler/TumHandler.hpp"
 //#include "cvo/Calibration.hpp"
 #include <utils/CvoPointCloud.hpp>
 #include "utils/ImageRGBD.hpp"
@@ -34,15 +35,15 @@ void CvoPointCloud_to_Vertices(const cvo::CvoPointCloud & pc_in,
 int main(int argc, char const ** argv)
 {
 
-  cvo::TartanAirHandler tartan(argv[1]);
-  int total_iters = tartan.get_total_number();
+  cvo::TumHandler tum(argv[1]);
+  int total_iters = tum.get_total_number();
   std::string calib_file;
   calib_file = std::string(argv[1] ) +"/cvo_calib.txt"; 
   cvo::Calibration calib(calib_file);
   std::ofstream accum_output(argv[3]);
   std::ofstream time_output(argv[4]);
   int start_frame = std::stoi(argv[5]);
-  tartan.set_start_index(start_frame);
+  tum.set_start_index(start_frame);
   int max_num = std::stoi(argv[6]);
 
   int method_ind = std::stoi(argv[7]);
@@ -54,10 +55,10 @@ int main(int argc, char const ** argv)
   Eigen::Matrix4d accum_mat = Eigen::Matrix4d::Identity();
 
   cv::Mat source_left;
-  std::vector<float> source_depth;
-  tartan.read_next_rgbd(source_left, source_depth);
+  std::vector<uint16_t> source_depth;
+  tum.read_next_rgbd(source_left, source_depth);
   std::cout<<"read source raw...\n";
-  std::shared_ptr<cvo::ImageRGBD<float>> source_raw(new cvo::ImageRGBD<float>(source_left, source_depth));
+  std::shared_ptr<cvo::ImageRGBD<uint16_t>> source_raw(new cvo::ImageRGBD<uint16_t>(source_left, source_depth));
   std::cout<<"build source CvoPointCloud...\n";
   std::shared_ptr<cvo::CvoPointCloud> source_cvo(new cvo::CvoPointCloud(*source_raw, calib
                                                                         , cvo::CvoPointCloud::FULL
@@ -73,16 +74,16 @@ int main(int argc, char const ** argv)
     std::cout<<"\n\n\n\n============================================="<<std::endl;
     std::cout<<"Aligning "<<i<<" and "<<i+1<<" with GPU "<<std::endl;
 
-    tartan.next_frame_index();
+    tum.next_frame_index();
     cv::Mat left;
-    std::vector<float> depth;
-    //if (tartan.read_next_stereo(left, right, 19, semantics_target) != 0) {
-    if (tartan.read_next_rgbd(left, depth) != 0) {
+    std::vector<uint16_t> depth;
+    //if (tum.read_next_stereo(left, right, 19, semantics_target) != 0) {
+    if (tum.read_next_rgbd(left, depth) != 0) {
       std::cout<<"finish all files\n";
       break;
     }
 
-    std::shared_ptr<cvo::ImageRGBD<float>> target_raw(new cvo::ImageRGBD<float>(left, depth));
+    std::shared_ptr<cvo::ImageRGBD<uint16_t>> target_raw(new cvo::ImageRGBD<uint16_t>(left, depth));
     std::shared_ptr<cvo::CvoPointCloud> target_cvo(new cvo::CvoPointCloud(*target_raw, calib
                                                                           ,cvo::CvoPointCloud::FULL
                                                                           ));

@@ -5,7 +5,8 @@ project(FRICP)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 #--- Compiler configuration
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 #--- OpenMP (cannot work in clang)
 find_package(OpenMP QUIET)
@@ -22,18 +23,28 @@ find_package(NanoFlann REQUIRED)
 include_directories(${NANOFLANN_INCLUDE_DIR})
 
 find_package(UnifiedCvo REQUIRED)
+find_package(PCL REQUIRED)
+find_package(OpenCV REQUIRED)
 
 #--- Build example
 include_directories(.)
-file(GLOB SOURCES "*.cpp")
+file(GLOB SOURCES "main.cpp")
 file(GLOB HEADERS "*.h")
 add_executable(FRICP ${SOURCES} ${HEADERS})
 
 add_executable(kitti_test kitti.cpp)
-target_link_libraries(kitti_test UnifiedCvo::kitti )
+target_include_directories(kitti_test PUBLIC ${HEADERS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(kitti_test UnifiedCvo::kitti UnifiedCvo::cvo_utils_lib UnifiedCvo::cvo_gpu_img_lib ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(tartan_test tartan.cpp )
-target_link_libraries(tartan_test UnifiedCvo::tartan )
+target_include_directories(tartan_test PUBLIC ${HEADERS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(tartan_test UnifiedCvo::tartan UnifiedCvo::cvo_gpu_img_lib UnifiedCvo::cvo_utils_lib  ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
+
+add_executable(tum_test tum.cpp )
+target_include_directories(tum_test PUBLIC ${HEADERS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(tum_test UnifiedCvo::tum UnifiedCvo::cvo_gpu_img_lib UnifiedCvo::cvo_utils_lib  ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
 
 
 if(APPLE OR UNIX)
