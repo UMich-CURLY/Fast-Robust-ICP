@@ -26,28 +26,28 @@ void CvoPointCloud_to_Vertices(const cvo::CvoPointCloud & pc_in,
   out->conservativeResize(3, pc_in.size());
   for (int i = 0; i < pc_in.size(); i++) {
     Eigen::Vector3d p = pc_in.at(i).cast<double>();
-    out->row(i) = p;
+    out->col(i) = p;
   }
 }
 
 int main(int argc, char const ** argv)
 {
 
-  cvo::KittiHandler kitti(argv[1], 1);
+  cvo::KittiHandler kitti(argv[1], 0);
   int total_iters = kitti.get_total_number();
   std::string calib_file;
   calib_file = std::string(argv[1] ) +"/cvo_calib.txt"; 
   cvo::Calibration calib(calib_file);
-  std::ofstream accum_output(argv[3]);
-  std::ofstream time_output(argv[4]);
-  int start_frame = std::stoi(argv[5]);
+  std::ofstream accum_output(argv[2]);
+  std::ofstream time_output(argv[3]);
+  int start_frame = std::stoi(argv[4]);
   kitti.set_start_index(start_frame);
-  int max_num = std::stoi(argv[6]);
+  int max_num = std::stoi(argv[5]);
 
-  int method_ind = std::stoi(argv[7]);
+  int method_ind = std::stoi(argv[6]);
   enum Method{ICP, AA_ICP, FICP, RICP, PPL, RPPL, SparseICP, SICPPPL};
   Method method = static_cast<Method>(method_ind);
-
+  std::cout<<"running method is "<<method<<std::endl;
   Eigen::Matrix4d init_guess = Eigen::Matrix4d::Identity();  // from source frame to the target frame
   //init_guess(2,3)=2.22;
   Eigen::Matrix4d accum_mat = Eigen::Matrix4d::Identity();
@@ -232,9 +232,10 @@ int main(int argc, char const ** argv)
     res_trans.block(0,3,3,1) *= scale;    
     res_T.block(0,0,3,3) = res_trans.block(0,0,3,3);
     res_T.block(0,3,3,1) = res_trans.block(0,3,3,1);
+    res_T = res_T.inverse().eval();
     std::cout<<"Transform is "<<res_T <<"\n\n";
 
-    init_guess = res_T;
+    init_guess = res_T.inverse();
 
     accum_mat = (accum_mat * res_T).eval();
     accum_output << accum_mat(0,0)<<" "<<accum_mat(0,1)<<" "<<accum_mat(0,2)<<" "<<accum_mat(0,3)<<" "

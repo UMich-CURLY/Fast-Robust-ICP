@@ -27,7 +27,7 @@ void CvoPointCloud_to_Vertices(const cvo::CvoPointCloud & pc_in,
   out->conservativeResize(3, pc_in.size());
   for (int i = 0; i < pc_in.size(); i++) {
     Eigen::Vector3d p = pc_in.at(i).cast<double>();
-    out->row(i) = p;
+    out->col(i) = p;
   }
   
 }
@@ -40,13 +40,13 @@ int main(int argc, char const ** argv)
   std::string calib_file;
   calib_file = std::string(argv[1] ) +"/cvo_calib.txt"; 
   cvo::Calibration calib(calib_file);
-  std::ofstream accum_output(argv[3]);
-  std::ofstream time_output(argv[4]);
-  int start_frame = std::stoi(argv[5]);
+  std::ofstream accum_output(argv[2]);
+  std::ofstream time_output(argv[3]);
+  int start_frame = std::stoi(argv[4]);
   tum.set_start_index(start_frame);
-  int max_num = std::stoi(argv[6]);
+  int max_num = std::stoi(argv[5]);
 
-  int method_ind = std::stoi(argv[7]);
+  int method_ind = std::stoi(argv[6]);
   enum Method{ICP, AA_ICP, FICP, RICP, PPL, RPPL, SparseICP, SICPPPL};
   Method method = static_cast<Method>(method_ind);
 
@@ -57,6 +57,8 @@ int main(int argc, char const ** argv)
   cv::Mat source_left;
   std::vector<uint16_t> source_depth;
   tum.read_next_rgbd(source_left, source_depth);
+  std::vector<std::string> vstrRGBName = tum.get_rgb_name_list();
+
   std::cout<<"read source raw...\n";
   std::shared_ptr<cvo::ImageRGBD<uint16_t>> source_raw(new cvo::ImageRGBD<uint16_t>(source_left, source_depth));
   std::cout<<"build source CvoPointCloud...\n";
@@ -233,15 +235,24 @@ int main(int argc, char const ** argv)
     res_trans.block(0,3,3,1) *= scale;
     res_T.block(0,0,3,3) = res_trans.block(0,0,3,3);
     res_T.block(0,3,3,1) = res_trans.block(0,3,3,1);
+    res_T = (res_T.inverse()).eval();    
     std::cout<<"Transform is "<<res_T <<"\n\n";
 
-    init_guess = res_T;
+    init_guess = res_T.inverse();
     
     accum_mat = (accum_mat * res_T).eval();
+    /*
     accum_output << accum_mat(0,0)<<" "<<accum_mat(0,1)<<" "<<accum_mat(0,2)<<" "<<accum_mat(0,3)<<" "
                 <<accum_mat(1,0)<<" " <<accum_mat(1,1)<<" "<<accum_mat(1,2)<<" "<<accum_mat(1,3)<<" "
                 <<accum_mat(2,0)<<" " <<accum_mat(2,1)<<" "<<accum_mat(2,2)<<" "<<accum_mat(2,3);
     accum_output<<"\n";
+    */
+    Eigen::Quaterniond q(accum_mat.block<3,3>(0,0));
+    accum_output<<vstrRGBName[i]<<" ";
+    accum_output<<accum_mat(0,3)<<" "<<accum_mat(1,3)<<" "<<accum_mat(2,3)<<" "; 
+    accum_output<<q.x()<<" "<<q.y()<<" "<<q.z()<<" "<<q.w()<<"\n";
+    //accum_output.flush();
+    
     accum_output<<std::flush;
     
 
