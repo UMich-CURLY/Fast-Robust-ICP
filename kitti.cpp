@@ -133,6 +133,7 @@ int main(int argc, char const ** argv)
     /// Initial transformation
     if(use_init) {
       MatrixXX init_trans = init_guess;
+      std::cout<<"Init T is \n"<<init_trans<<std::endl;
       //read_transMat(init_trans, file_init);
       init_trans.block(0, dim, dim, 1) /= scale;
       init_trans.block(0,3,3,1) += init_trans.block(0,0,3,3)*source_mean - target_mean;
@@ -243,6 +244,9 @@ int main(int argc, char const ** argv)
                 <<accum_mat(2,0)<<" " <<accum_mat(2,1)<<" "<<accum_mat(2,2)<<" "<<accum_mat(2,3);
     accum_output<<"\n";
     accum_output<<std::flush;
+ 
+    vertices_target->colwise() += target_mean;
+    *vertices_target *= scale;
     
     vertices_source = vertices_target;
     

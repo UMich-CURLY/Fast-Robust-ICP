@@ -39,7 +39,7 @@ int main(int argc, char const ** argv)
   int total_iters = tum.get_total_number();
   std::string calib_file;
   calib_file = std::string(argv[1] ) +"/cvo_calib.txt"; 
-  cvo::Calibration calib(calib_file);
+  cvo::Calibration calib(calib_file, cvo::Calibration::PointCloudType::RGBD);
   std::ofstream accum_output(argv[2]);
   std::ofstream time_output(argv[3]);
   int start_frame = std::stoi(argv[4]);
@@ -103,10 +103,12 @@ int main(int argc, char const ** argv)
     //read_file(vertices_source, normal_source, src_vert_colors, file_source);
     std::cout << "source: " << vertices_source->rows() << "x" << vertices_source->cols() << std::endl;
 
+    std::cout<<"source[2] is "<<vertices_source->col(1).transpose()<<std::endl;
     //--- Model that source will be aligned to
     Vertices normal_target, tar_vert_colors;
     //read_file(vertices_target, normal_target, tar_vert_colors, file_target);
     std::cout << "target: " << vertices_target->rows() << "x" << vertices_target->cols() << std::endl;
+    std::cout<<"target[2] is "<<vertices_target->col(1).transpose()<<std::endl;
 
     // scaling
     Eigen::Vector3d source_scale, target_scale;
@@ -136,6 +138,7 @@ int main(int argc, char const ** argv)
     /// Initial transformation
     if(use_init) {
       MatrixXX init_trans = init_guess;
+      std::cout<<"init guess is "<<init_trans<<std::endl;
       //read_transMat(init_trans, file_init);
       init_trans.block(0, dim, dim, 1) /= scale;
       init_trans.block(0,3,3,1) += init_trans.block(0,0,3,3)*source_mean - target_mean;
@@ -258,7 +261,13 @@ int main(int argc, char const ** argv)
 
     //out_trans << res_trans << std::endl;
     //out_trans.close();
+    //source_cvo = target_cvo;
+    vertices_target->colwise() += target_mean;
+    *vertices_target *= scale;
+
     vertices_source = vertices_target;
+    std::cout<<"source[2] is "<<vertices_source->col(1).transpose()<<std::endl;
+    std::cout<<"target[2] is "<<vertices_target->col(1).transpose()<<std::endl;
   }
 
   accum_output.close();

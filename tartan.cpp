@@ -38,7 +38,7 @@ int main(int argc, char const ** argv)
   int total_iters = tartan.get_total_number();
   std::string calib_file;
   calib_file = std::string(argv[1] ) +"/cvo_calib.txt"; 
-  cvo::Calibration calib(calib_file);
+  cvo::Calibration calib(calib_file, cvo::Calibration::PointCloudType::RGBD);
   std::ofstream accum_output(argv[2]);
   std::ofstream time_output(argv[3]);
   int start_frame = std::stoi(argv[4]);
@@ -133,6 +133,7 @@ int main(int argc, char const ** argv)
     /// Initial transformation
     if(use_init) {
       MatrixXX init_trans = init_guess;
+      std::cout<<"Init tras is \n"<<init_trans<<std::endl;
       //read_transMat(init_trans, file_init);
       init_trans.block(0, dim, dim, 1) /= scale;
       init_trans.block(0,3,3,1) += init_trans.block(0,0,3,3)*source_mean - target_mean;
@@ -252,6 +253,10 @@ int main(int argc, char const ** argv)
 
     //out_trans << res_trans << std::endl;
     //out_trans.close();
+    vertices_target->colwise() += target_mean;
+    *vertices_target *= scale;
+
+
     vertices_source = vertices_target;
   }
 
